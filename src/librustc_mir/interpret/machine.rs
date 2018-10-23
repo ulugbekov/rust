@@ -21,15 +21,8 @@ use rustc::ty::{self, Ty, layout::{Size, TyLayout}, query::TyCtxtAt};
 
 use super::{
     Allocation, AllocId, EvalResult, Scalar,
-    EvalContext, PlaceTy, OpTy, Pointer, MemoryKind,
+    EvalContext, PlaceTy, OpTy, Pointer, MemoryKind, MemoryAccess,
 };
-
-/// Classifying memory accesses
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MemoryAccess {
-    Read,
-    Write,
-}
 
 /// Whether this kind of memory is allowed to leak
 pub trait MayLeak: Copy {
@@ -179,21 +172,6 @@ pub trait Machine<'a, 'mir, 'tcx>: Sized {
         ecx: &mut EvalContext<'a, 'mir, 'tcx, Self>,
         dest: PlaceTy<'tcx, Self::PointerTag>,
     ) -> EvalResult<'tcx>;
-
-    /// Hook for performing extra checks on a memory access.
-    ///
-    /// Takes read-only access to the allocation so we can keep all the memory read
-    /// operations take `&self`.  Use a `RefCell` in `AllocExtra` if you
-    /// need to mutate.
-    #[inline]
-    fn memory_accessed(
-        _alloc: &Allocation<Self::PointerTag, Self::AllocExtra>,
-        _ptr: Pointer<Self::PointerTag>,
-        _size: Size,
-        _access: MemoryAccess,
-    ) -> EvalResult<'tcx> {
-        Ok(())
-    }
 
     /// Hook for performing extra checks when memory gets deallocated.
     #[inline]
